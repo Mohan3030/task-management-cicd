@@ -51,3 +51,6 @@ jobs:
       - name: Run backend lint
         run: npm run lint
         working-directory: backend
+      - name: Run backend tests
+        run: npm test
+        working-directory: backend        
