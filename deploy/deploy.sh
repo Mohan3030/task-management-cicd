@@ -10,13 +10,29 @@ COMMANDS=$(jq -n \
   --arg tag "$IMAGE_TAG" \
   '{
     commands: [
-      "set -e",
+      "set -Eeuo pipefail",
       "cd /home/ubuntu/task-management",
+
+      "BACKUP=$(mktemp)",
+      "sudo cp compose.yaml \"$BACKUP\"",
+
+      "rollback() { STATUS=$?; trap - ERR; echo Deployment failed. Rolling back...; if sudo cp \"$BACKUP\" compose.yaml && sudo docker compose pull backend frontend && sudo docker compose up -d; then echo Rollback completed. Previous version restored.; else echo CRITICAL: Rollback failed. Manual recovery required.; fi; rm -f \"$BACKUP\"; exit \"$STATUS\"; }",
+      "trap rollback ERR",
+
       ("sudo sed -i -E \"s|(task-management-backend:)[^[:space:]]+|\\1" + $tag + "|\" compose.yaml"),
       ("sudo sed -i -E \"s|(task-management-frontend:)[^[:space:]]+|\\1" + $tag + "|\" compose.yaml"),
+
       "sudo docker compose pull backend frontend",
       "sudo docker compose up -d",
-      "sudo docker compose ps"
+
+      "HEALTHY=0",
+      "for i in $(seq 1 12); do if sudo docker compose exec -T backend node -e \"fetch('http://frontend/api/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))\"; then HEALTHY=1; break; fi; sleep 5; done",
+      "if [ \"$HEALTHY\" -ne 1 ]; then echo Application health check failed; false; fi",
+
+      "trap - ERR",
+      "rm -f \"$BACKUP\"",
+      "sudo docker compose ps",
+      "echo Deployment and application health check successful."
     ]
   }')
 
