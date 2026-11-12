@@ -16,8 +16,7 @@ COMMANDS=$(jq -n \
       "BACKUP=$(mktemp)",
       "if ! sudo cp compose.yaml \"$BACKUP\"; then echo Could not create backup; exit 1; fi",
 
-      "rollback() { echo Deployment failed. Restoring previous version...; if sudo cp \"$BACKUP\" compose.yaml && sudo docker compose pull backend frontend && sudo docker compose up -d; then echo Rollback completed successfully.; else echo CRITICAL: Rollback failed. Manual recovery required.; fi; rm -f \"$BACKUP\"; }",
-
+      "rollback() { echo Deployment failed. Restoring previous version...; if sudo cp \"$BACKUP\" compose.yaml && sudo docker compose pull backend frontend && sudo docker compose up -d; then ROLLBACK_HEALTHY=0; for i in $(seq 1 12); do if curl -fsS http://localhost/api/health >/dev/null; then ROLLBACK_HEALTHY=1; break; fi; sleep 5; done; if [ \"$ROLLBACK_HEALTHY\" -eq 1 ]; then echo Rollback completed and previous application is healthy.; else echo CRITICAL: Previous version restored but health check failed. Manual recovery required.; fi; else echo CRITICAL: Rollback failed. Manual recovery required.; fi; rm -f \"$BACKUP\"; }", 
       ("if ! sudo sed -i -E \"s|(task-management-backend:)[^[:space:]]+|\\1" + $tag + "|\" compose.yaml; then rollback; exit 1; fi"),
       ("if ! sudo sed -i -E \"s|(task-management-frontend:)[^[:space:]]+|\\1" + $tag + "|\" compose.yaml; then rollback; exit 1; fi"),
 
