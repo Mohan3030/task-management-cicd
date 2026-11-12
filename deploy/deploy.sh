@@ -12,7 +12,7 @@ COMMANDS=$(jq -n \
     commands: [
       "set -eu",
       "cd /home/ubuntu/task-management",
-
+      "aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin 631237578239.dkr.ecr.ap-south-1.amazonaws.com",
       "BACKUP=$(mktemp)",
       "if ! sudo cp compose.yaml \"$BACKUP\"; then echo Could not create backup; exit 1; fi",
 
