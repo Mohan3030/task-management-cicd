@@ -25,8 +25,7 @@ COMMANDS=$(jq -n \
       "if ! sudo docker compose up -d; then rollback; exit 1; fi",
 
       "HEALTHY=0",
-      "for i in $(seq 1 12); do if sudo docker compose exec -T backend node -e \"fetch('http://frontend/api/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))\"; then HEALTHY=1; break; fi; sleep 5; done",
-
+      "for i in $(seq 1 12); do if curl -fsS http://localhost/api/health >/dev/null; then HEALTHY=1; break; fi; sleep 5; done",
       "if [ \"$HEALTHY\" -ne 1 ]; then echo Application health check failed; rollback; exit 1; fi",
 
       "rm -f \"$BACKUP\"",
