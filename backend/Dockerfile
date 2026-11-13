@@ -1,3 +1,4 @@
+
 FROM node:24
 
 WORKDIR /app
@@ -6,7 +7,10 @@ COPY package*.json ./
 
 RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+
+# Run application as a non-root user
+USER node
 
 EXPOSE 5001
 
