@@ -1,4 +1,4 @@
-
+import { generateTaskNarrative } from '../services/geminiService.js';
 import {
   createTaskService,
   getAllTasksService,
@@ -160,6 +160,45 @@ export const deleteTaskController = async (req, res, next) => {
       success: true,
       message: 'Task deleted successfully',
       data: task,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+// Generate AI narrative for a task
+export const generateTaskNarrativeController = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const { id } = req.params;
+
+    if (!/^[1-9]\d*$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task ID',
+      });
+    }
+
+    const task = await getTaskByIdService(id);
+
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found',
+      });
+    }
+
+    const narrative = await generateTaskNarrative(task);
+
+    res.status(200).json({
+      success: true,
+      message: 'AI narrative generated successfully',
+      data: {
+        taskId: task.id,
+        narrative,
+      },
     });
   } catch (error) {
     next(error);

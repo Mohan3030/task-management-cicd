@@ -1,4 +1,3 @@
-
 * {
   box-sizing: border-box;
 }
@@ -128,7 +127,9 @@ button:disabled {
 .task-card {
   min-width: 0;
   margin: 0;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .task-card:hover {
@@ -231,4 +232,40 @@ button:disabled {
   .task-card {
     padding: 18px;
   }
+}
+/* AI Task Narrative */
+.ai-insight-section {
+  margin-top: 18px;
+}
+
+.ai-button {
+  background: #7c3aed;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-button:hover {
+  background: #6d28d9;
+}
+
+.ai-narrative {
+  margin-top: 14px;
+  padding: 15px;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 9px;
+}
+
+.ai-narrative h4 {
+  margin: 0 0 8px;
+  color: #5b21b6;
+  font-size: 14px;
+}
+
+.ai-narrative p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.7;
 }
