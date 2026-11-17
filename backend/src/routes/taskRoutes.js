@@ -8,6 +8,7 @@ import {
   updateTaskController,
   updateTaskStatusController,
   deleteTaskController,
+  generateTaskNarrativeController,
 } from '../controllers/taskController.js';
 
 const router = express.Router();
@@ -24,4 +25,5 @@ router.patch('/:id/status', updateTaskStatusController);
 
 router.delete('/:id', deleteTaskController);
 
+router.post('/:id/ai-narrative', generateTaskNarrativeController);
 export default router;

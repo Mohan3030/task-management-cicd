@@ -1,22 +1,24 @@
-
-import { useState, useEffect } from 'react';
-import './App.css';
+import { useState, useEffect } from "react";
+import "./App.css";
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('MEDIUM');
+  const [error, setError] = useState("");
+  // AI narrative state
+  const [aiNarratives, setAiNarratives] = useState({});
+  const [generatingNarrativeTaskId, setGeneratingNarrativeTaskId] =
+    useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("MEDIUM");
 
   const [editingTaskId, setEditingTaskId] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editPriority, setEditPriority] = useState('MEDIUM');
-  const [editStatus, setEditStatus] = useState('PENDING');
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPriority, setEditPriority] = useState("MEDIUM");
+  const [editStatus, setEditStatus] = useState("PENDING");
 
   // Fetch tasks when the component loads.
   useEffect(() => {
@@ -24,18 +26,18 @@ function App() {
 
     const loadTasks = async () => {
       try {
-        const response = await fetch('/api/tasks', {
+        const response = await fetch("/api/tasks", {
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch tasks');
+          throw new Error("Failed to fetch tasks");
         }
 
         const result = await response.json();
         setTasks(result.data);
       } catch (error) {
-        if (error.name !== 'AbortError') {
+        if (error.name !== "AbortError") {
           setError(error.message);
         }
       } finally {
@@ -52,26 +54,26 @@ function App() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setSubmitting(true);
 
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description, priority }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.details?.join(', ') || result.message);
+        throw new Error(result.details?.join(", ") || result.message);
       }
 
       setTasks((previousTasks) => [result.data, ...previousTasks]);
-      setTitle('');
-      setDescription('');
-      setPriority('MEDIUM');
+      setTitle("");
+      setDescription("");
+      setPriority("MEDIUM");
     } catch (error) {
       setError(error.message);
     } finally {
@@ -80,25 +82,23 @@ function App() {
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
-    setError('');
+    setError("");
 
     try {
       const response = await fetch(`/api/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.details?.join(', ') || result.message);
+        throw new Error(result.details?.join(", ") || result.message);
       }
 
       setTasks((previousTasks) =>
-        previousTasks.map((task) =>
-          task.id === taskId ? result.data : task
-        )
+        previousTasks.map((task) => (task.id === taskId ? result.data : task)),
       );
     } catch (error) {
       setError(error.message);
@@ -107,16 +107,16 @@ function App() {
 
   const handleDelete = async (taskId) => {
     const confirmed = window.confirm(
-      'Are you sure you want to delete this task?'
+      "Are you sure you want to delete this task?",
     );
 
     if (!confirmed) return;
 
-    setError('');
+    setError("");
 
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       const result = await response.json();
@@ -126,30 +126,55 @@ function App() {
       }
 
       setTasks((previousTasks) =>
-        previousTasks.filter((task) => task.id !== taskId)
+        previousTasks.filter((task) => task.id !== taskId),
       );
     } catch (error) {
       setError(error.message);
     }
   };
+  // Generate AI narrative for a task
+  const handleGenerateNarrative = async (taskId) => {
+    setError("");
+    setGeneratingNarrativeTaskId(taskId);
 
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/ai-narrative`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to generate AI narrative");
+      }
+
+      setAiNarratives((previous) => ({
+        ...previous,
+        [taskId]: result.data.narrative,
+      }));
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setGeneratingNarrativeTaskId(null);
+    }
+  };
   const startEditing = (task) => {
     setEditingTaskId(task.id);
     setEditTitle(task.title);
-    setEditDescription(task.description || '');
+    setEditDescription(task.description || "");
     setEditPriority(task.priority);
     setEditStatus(task.status);
   };
 
   const handleEdit = async (event, taskId) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setSubmitting(true);
 
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: editTitle,
           description: editDescription,
@@ -161,13 +186,11 @@ function App() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.details?.join(', ') || result.message);
+        throw new Error(result.details?.join(", ") || result.message);
       }
 
       setTasks((previousTasks) =>
-        previousTasks.map((task) =>
-          task.id === taskId ? result.data : task
-        )
+        previousTasks.map((task) => (task.id === taskId ? result.data : task)),
       );
 
       setEditingTaskId(null);
@@ -226,7 +249,7 @@ function App() {
           </div>
 
           <button type="submit" disabled={submitting}>
-            {submitting ? 'Creating...' : 'Add Task'}
+            {submitting ? "Creating..." : "Add Task"}
           </button>
         </form>
       </section>
@@ -298,7 +321,7 @@ function App() {
                     </div>
 
                     <button type="submit" disabled={submitting}>
-                      {submitting ? 'Saving...' : 'Save Changes'}
+                      {submitting ? "Saving..." : "Save Changes"}
                     </button>
 
                     <button
@@ -313,14 +336,31 @@ function App() {
                   <>
                     <div className="task-header">
                       <h3>{task.title}</h3>
-                      <span className="priority-label">
-                        {task.priority}
-                      </span>
+                      <span className="priority-label">{task.priority}</span>
                     </div>
 
                     <p className="task-description">
-                      {task.description || 'No description provided'}
+                      {task.description || "No description provided"}
                     </p>
+                    <div className="ai-insight-section">
+                      <button
+                        type="button"
+                        className="ai-button"
+                        onClick={() => handleGenerateNarrative(task.id)}
+                        disabled={generatingNarrativeTaskId !== null}
+                      >
+                        {generatingNarrativeTaskId === task.id
+                          ? "Generating..."
+                          : "✨ Generate AI Insight"}
+                      </button>
+
+                      {aiNarratives[task.id] && (
+                        <div className="ai-narrative">
+                          <h4>✨ AI Insight</h4>
+                          <p>{aiNarratives[task.id]}</p>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="task-meta">
                       <label>
